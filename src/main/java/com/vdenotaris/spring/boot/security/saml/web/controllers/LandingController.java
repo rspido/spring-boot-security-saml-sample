@@ -16,11 +16,15 @@
 
 package com.vdenotaris.spring.boot.security.saml.web.controllers;
 
+import org.opensaml.ws.message.encoder.MessageEncodingException;
+import org.opensaml.xml.util.XMLHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.saml.SAMLCredential;
+import org.springframework.security.saml.util.SAMLUtil;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,10 +43,20 @@ public class LandingController {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if (auth == null)
 			LOG.debug("Current authentication instance from security context is null");
-		else
+		else {
 			LOG.debug("Current authentication instance from security context: "
 					+ this.getClass().getSimpleName());
-		model.addAttribute("username", 	user.getUsername());
+			model.addAttribute("username", user.getUsername());
+			SAMLCredential credential = (SAMLCredential) auth.getCredentials();
+			model.addAttribute("authentication", auth);
+			model.addAttribute("credential", credential);
+			try {
+				model.addAttribute("assertion", XMLHelper.nodeToString(SAMLUtil.marshallMessage(credential.getAuthenticationAssertion())));
+			} catch (MessageEncodingException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
 		return "pages/landing";
 	}
 

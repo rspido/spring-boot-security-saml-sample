@@ -16,6 +16,107 @@
       </div>
       <p><img class="img-fluid" th:src="@{/img/nyan-cat.png}" /></p>
       <p>You are logged as <span class="badge badge-dark" th:text="${username}">null</span>.</p>
+      <p>
+        <table>
+            <tr>
+                <td colspan="2"><h5>General information</h5></td>
+            </tr>
+            <tr>
+                <td width="200"><strong>Name:</strong></td>
+                <td th:text="${authentication.name}"/>
+            </tr>
+            <tr>
+                <td><strong>Name ID:</strong></td>
+                <td th:text="${credential.nameID.value}"/>
+            </tr>
+            <tr>
+                <td><strong>Name ID format:</strong></td>
+                <td th:text="${credential.nameID.format}"/>
+            </tr>
+            <tr>
+                <td><strong>IDP:</strong></td>
+                <td th:text="${credential.authenticationAssertion.issuer.value}"/>
+            </tr>
+            <tr>
+                <td><strong>Assertion issue time:</strong></td>
+                <td th:text="${credential.authenticationAssertion.issueInstant}"/>
+            </tr>
+        </table>
+      </p>
+        <p>
+        <table>
+            <tr>
+                <td colspan="2"><h5>Subject confirmation</h5></td>
+            </tr>
+            <tr>
+                <td width="200"><strong>Method:</strong></td>
+                <td th:text="${credential.authenticationAssertion.subject.subjectConfirmations[0].method}"/>
+            </tr>
+            <tr>
+                <td><strong>In response to:</strong></td>
+                <td th:text="${credential.authenticationAssertion.subject.subjectConfirmations[0].subjectConfirmationData.inResponseTo}"/>
+            </tr>
+            <tr>
+                <td><strong>Not on or after:</strong></td>
+                <td th:text="${credential.authenticationAssertion.subject.subjectConfirmations[0].subjectConfirmationData.notOnOrAfter}"/>
+            </tr>
+            <tr>
+                <td><strong>Recipient:</strong></td>
+                <td th:text="${credential.authenticationAssertion.subject.subjectConfirmations[0].subjectConfirmationData.recipient}"/>
+            </tr>
+        </table>
+        </p>
+        <p>
+        <table>
+            <tr>
+                <td colspan="2"><h5>Authentication statement</h5></td>
+            </tr>
+            <tr>
+                <td width="200"><strong>Authentication instance:</strong></td>
+                <td th:text="${credential.authenticationAssertion.authnStatements[0].authnInstant}"/>
+            </tr>
+            <tr>
+                <td><strong>Session validity:</strong></td>
+                <td th:text="${credential.authenticationAssertion.authnStatements[0].sessionNotOnOrAfter}"/>
+            </tr>
+            <tr>
+                <td><strong>Authentication context class:</strong></td>
+                <td th:text="${credential.authenticationAssertion.authnStatements[0].authnContext.authnContextClassRef.authnContextClassRef}"/>
+            </tr>
+            <tr>
+                <td><strong>Session index:</strong></td>
+                <td th:text="${credential.authenticationAssertion.authnStatements[0].sessionIndex}"/>
+            </tr>
+        </table>
+        </p>
+        <p>
+        <table>
+            <tr>
+                <td colspan="2"><h5>Conditions</h5></td>
+            </tr>
+            <tr>
+                <td width="200"><strong>Not before:</strong></td>
+                <td th:text="${credential.authenticationAssertion.conditions.notBefore}"/>
+            </tr>
+            <tr>
+                <td><strong>Not on or after:</strong></td>
+                <td th:text="${credential.authenticationAssertion.conditions.notOnOrAfter}"/>
+            </tr>
+        </table>
+        </p>
+        <p>
+        <table>
+            <tr>
+                <td><h5>Assertion XML</h5></td>
+            </tr>
+            <tr>
+                <td>
+                    <textarea cols="60" rows="20" style="width:100%" disabled="disabled" th:text="${assertion}"/>
+                </td>
+            </tr>
+        </table>
+        </p>
+
       <small class="d-block text-right mt-3" id="sso-btn">
         <a th:href="@{/saml/logout}" class="btn btn-spring btn-sm">
           <i class="far fa-user-circle"></i> Global logout

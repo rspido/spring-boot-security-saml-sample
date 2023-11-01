@@ -25,6 +25,7 @@ import java.util.Timer;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.velocity.app.VelocityEngine;
 import org.opensaml.saml2.metadata.provider.HTTPMetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
@@ -259,16 +260,37 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements I
 	public ExtendedMetadataDelegate ssoCircleExtendedMetadataProvider()
 			throws MetadataProviderException {
 		String idpSSOCircleMetadataURL = "https://idp.ssocircle.com/meta-idp.xml";
+		return createExtendedMetadataDelegate(idpSSOCircleMetadataURL);
+	}
+
+    private ExtendedMetadataDelegate createExtendedMetadataDelegate(String idpMetadataURL) throws MetadataProviderException {
 		HTTPMetadataProvider httpMetadataProvider = new HTTPMetadataProvider(
-				this.backgroundTaskTimer, httpClient(), idpSSOCircleMetadataURL);
+				this.backgroundTaskTimer, httpClient(), idpMetadataURL);
 		httpMetadataProvider.setParserPool(parserPool());
-		ExtendedMetadataDelegate extendedMetadataDelegate = 
+		ExtendedMetadataDelegate extendedMetadataDelegate =
 				new ExtendedMetadataDelegate(httpMetadataProvider, extendedMetadata());
 		extendedMetadataDelegate.setMetadataTrustCheck(true);
 		extendedMetadataDelegate.setMetadataRequireSignature(false);
 		backgroundTaskTimer.purge();
 		return extendedMetadataDelegate;
 	}
+
+    @Bean
+    @Qualifier("idp-localKeycloak")
+    public ExtendedMetadataDelegate localKeycloakExtendedMetadataProvider()
+            throws MetadataProviderException {
+
+        // To configure Keycloak (realm 'halogenpartnerdev') as IdP
+        // * Retrieve local SP metadata in http://localhost:8282/spring-saml-sp/saml/metadata
+        // * then save it and import as a new client in the halogenpartnerdev realm: http://localhost:8181/auth/admin/master/console/#/create/client/halogenpartnerdev
+        //
+        // To also support idp initiated auth flow:
+        // *  In the main Spring-saml-sp settings page, configure property "IDP Initiated SSO URL Name" with value 'spring-saml-sp'
+        //    (to have a Target IDP initiated SSO URL of http://localhost:8181/auth/realms/halogenpartnerdev/protocol/saml/clients/spring-saml-sp )
+
+        String idpLocalKeycloakMetadataURL = "http://localhost:8181/auth/realms/halogenpartnerdev/protocol/saml/descriptor";
+        return createExtendedMetadataDelegate(idpLocalKeycloakMetadataURL);
+    }
 
     // IDP Metadata configuration - paths to metadata of IDPs in circle of trust
     // is here
@@ -277,6 +299,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements I
     @Qualifier("metadata")
     public CachingMetadataManager metadata() throws MetadataProviderException {
         List<MetadataProvider> providers = new ArrayList<MetadataProvider>();
+        providers.add(localKeycloakExtendedMetadataProvider());
         providers.add(ssoCircleExtendedMetadataProvider());
         return new CachingMetadataManager(providers);
     }
@@ -285,7 +308,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements I
     @Bean
     public MetadataGenerator metadataGenerator() {
         MetadataGenerator metadataGenerator = new MetadataGenerator();
-        metadataGenerator.setEntityId("com:vdenotaris:spring:sp");
+        String contextPath = getApplicationContext().getEnvironment().getProperty("server.servlet.context-path");
+        String entityId = StringUtils.isNotBlank(contextPath) ? StringUtils.remove(contextPath, '/') : "com:vdenotaris:spring:sp";
+        metadataGenerator.setEntityId(entityId);
         metadataGenerator.setExtendedMetadata(extendedMetadata());
         metadataGenerator.setIncludeDiscoveryExtension(false);
         metadataGenerator.setKeyManager(keyManager()); 
